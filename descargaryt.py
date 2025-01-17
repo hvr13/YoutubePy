@@ -1,46 +1,22 @@
 import streamlit as st
-import subprocess
-import os
+from pytube import YouTube
 
-# Función para descargar el video
-def descargar_video_con_audio(url):
+# Función para generar el enlace de descarga
+def generar_enlace_descarga(url):
     try:
-        # Crear carpeta temporal para almacenar el video
-        carpeta_descargas = os.path.join(os.getcwd(), "descargas")
-        os.makedirs(carpeta_descargas, exist_ok=True)
-        salida = os.path.join(carpeta_descargas, "video_descargado.mp4")
+        # Crear objeto YouTube
+        yt = YouTube(url)
 
-        # Mostrar mensaje en Streamlit
-        st.info("Iniciando la descarga del mejor video y audio disponibles...")
+        # Obtener el stream de mayor resolución
+        stream = yt.streams.filter(progressive=True, file_extension="mp4").get_highest_resolution()
 
-        # Comando para descargar el video
-        comando = [
-            "yt-dlp",
-            "-f", "bestvideo+bestaudio",
-            "--merge-output-format", "mp4",
-            "-o", salida,
-            url
-        ]
-
-        # Ejecutar el comando y capturar la salida
-        resultado = subprocess.run(comando, text=True, capture_output=True)
-
-        # Mostrar salida del proceso para depuración
-        if resultado.returncode != 0:
-            st.error(f"Error en yt-dlp: {resultado.stderr}")
-            return None
-
-        # Verificar si el archivo se descargó correctamente
-        if os.path.exists(salida):
-            st.success("Descarga completada con éxito.")
-            return salida
-        else:
-            st.error("El archivo no se descargó correctamente.")
-            return None
+        # Enlace de descarga
+        enlace = stream.url
+        return enlace, yt.title
 
     except Exception as e:
-        st.error(f"Error inesperado: {str(e)}")
-        return None
+        st.error(f"Error al procesar la URL: {str(e)}")
+        return None, None
 
 # Interfaz en Streamlit
 st.header("Descargar videos de YouTube con Python")
@@ -48,17 +24,14 @@ st.header("Descargar videos de YouTube con Python")
 # Entrada de la URL
 url = st.text_input("Introduce la URL del video de YouTube:")
 
-# Botón para iniciar la descarga
-if st.button("Descargar"):
+# Botón para generar enlace de descarga
+if st.button("Generar enlace de descarga"):
     if url.strip():
-        archivo_descargado = descargar_video_con_audio(url)
-        if archivo_descargado:
-            with open(archivo_descargado, "rb") as file:
-                st.download_button(
-                    label="Descargar video",
-                    data=file,
-                    file_name="video_descargado.mp4",
-                    mime="video/mp4"
-                )
+        enlace, titulo = generar_enlace_descarga(url)
+        if enlace:
+            st.success(f"Enlace de descarga generado para: {titulo}")
+            st.markdown(f"[Haz clic aquí para descargar el video](<{enlace}>)", unsafe_allow_html=True)
+        else:
+            st.warning("No se pudo generar el enlace de descarga.")
     else:
         st.warning("Por favor, introduce una URL válida.")
