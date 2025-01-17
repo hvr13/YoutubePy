@@ -22,23 +22,25 @@ def descargar_video_con_audio(url):
             url
         ]
 
-        # Ejecutar el comando
-        subprocess.run(comando, check=True, text=True, capture_output=True)
+        # Ejecutar el comando y capturar la salida
+        resultado = subprocess.run(comando, text=True, capture_output=True)
+
+        # Mostrar salida del proceso para depuración
+        if resultado.returncode != 0:
+            st.error(f"Error en yt-dlp: {resultado.stderr}")
+            return None
 
         # Verificar si el archivo se descargó correctamente
         if os.path.exists(salida):
             st.success("Descarga completada con éxito.")
             return salida
         else:
-            st.error("Hubo un problema al descargar el video.")
+            st.error("El archivo no se descargó correctamente.")
             return None
 
-    except subprocess.CalledProcessError as e:
-        st.error(f"Error al ejecutar yt-dlp: {e.stderr}")
     except Exception as e:
-        st.error(f"Error inesperado: {e}")
-    return None
-
+        st.error(f"Error inesperado: {str(e)}")
+        return None
 
 # Interfaz en Streamlit
 st.header("Descargar videos de YouTube con Python")
