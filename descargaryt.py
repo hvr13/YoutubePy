@@ -1,11 +1,8 @@
 import streamlit as st
 import subprocess
 import os
-import platform
 
 # Función para descargar el video
-
-
 def descargar_video_con_audio(url):
     try:
         # Crear carpeta de descargas
@@ -26,38 +23,20 @@ def descargar_video_con_audio(url):
         ]
 
         # Ejecutar el comando
-        resultado = subprocess.run(
-            comando, check=True, text=True, capture_output=True)
+        subprocess.run(comando, check=True, text=True, capture_output=True)
 
         # Mostrar éxito en Streamlit
-        st.success(
-            f"Descarga completada con éxito. Archivo guardado en: {salida}")
+        st.success(f"Descarga completada con éxito. Archivo guardado en: {salida}")
         return carpeta_descargas
 
     except subprocess.CalledProcessError as e:
         st.error(f"Error al ejecutar yt-dlp: {e.stderr}")
     except FileNotFoundError:
-        st.error(
-            "yt-dlp no está instalado o no es accesible. Instálalo con 'pip install yt-dlp'.")
+        st.error("yt-dlp no está instalado o no es accesible. Instálalo con 'pip install yt-dlp'.")
     except Exception as e:
         st.error(f"Error inesperado: {e}")
 
     return None
-
-# Función para abrir la carpeta de descargas en Windows
-
-
-def abrir_carpeta(carpeta):
-    try:
-        if os.path.exists(carpeta):  # Verificar si la carpeta existe
-            # Abre la carpeta en el explorador de Windows
-            os.startfile(carpeta)
-            st.info(f"Abriendo la carpeta: {carpeta}")
-        else:
-            st.warning(f"La carpeta no existe: {carpeta}")
-    except Exception as e:
-        st.error(f"No se pudo abrir la carpeta: {e}")
-
 
 # Interfaz en Streamlit
 st.header("Descargar videos de YouTube con Python")
@@ -76,9 +55,19 @@ if st.button("Descargar"):
     else:
         st.warning("Por favor, introduce una URL válida.")
 
-# Botón para abrir la carpeta de descargas
-if st.button("Abrir carpeta de descargas"):
+# Botón para descargar el archivo directamente
+if st.button("Descargar archivo"):
     if st.session_state.carpeta_descargas:
-        abrir_carpeta(st.session_state.carpeta_descargas)
+        archivo_descargado = os.path.join(st.session_state.carpeta_descargas, "video_descargado.mp4")
+        if os.path.exists(archivo_descargado):
+            with open(archivo_descargado, "rb") as file:
+                st.download_button(
+                    label="Descargar video",
+                    data=file,
+                    file_name="video_descargado.mp4",
+                    mime="video/mp4"
+                )
+        else:
+            st.warning("El archivo no está disponible.")
     else:
-        st.warning("No hay descargas recientes o la carpeta no está disponible.")
+        st.warning("No hay descargas recientes disponibles.")
